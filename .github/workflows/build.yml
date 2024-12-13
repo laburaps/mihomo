@@ -209,6 +209,11 @@ jobs:
         sudo update-ca-certificates
         cp -f /etc/ssl/certs/ca-certificates.crt component/ca/ca-certificates.crt
 
+    - name: Install UPX
+      uses: crazy-max/ghaction-upx@v3
+      with:
+        install-only: true
+
     - name: Build core
       env:
         GOOS: ${{matrix.jobs.goos}}
@@ -220,9 +225,11 @@ jobs:
         go env
         go build -v -tags "with_gvisor" -trimpath -ldflags "${BUILDTAG} -X 'github.com/metacubex/mihomo/constant.Version=${VERSION}' -X 'github.com/metacubex/mihomo/constant.BuildTime=${BUILDTIME}' -w -s -buildid="
         if [ "${{matrix.jobs.goos}}" = "windows" ]; then
+          upx -q --best --lzma mihomo.exe || :
           cp mihomo.exe mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}}.exe
           zip -r mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}}-${VERSION}.zip mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}}.exe
         else
+          upx -q --best --lzma mihomo || :
           cp mihomo mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}}
           gzip -c mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}} > mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}}-${VERSION}.gz
           rm mihomo-${{matrix.jobs.goos}}-${{matrix.jobs.output}}
